@@ -1,0 +1,8 @@
+outlet	headlines not found	empty headlines
+YNET	90	0
+ISRAEL_HAYOM	89	0
+HAARETZ	137	1
+MAARIV	87	0
+NRG	88	15
+MAKO	88	67
+WALLA	87	0
