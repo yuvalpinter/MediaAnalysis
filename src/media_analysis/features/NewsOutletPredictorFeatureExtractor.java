@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +41,14 @@ public class NewsOutletPredictorFeatureExtractor {
 
         Attribute idAttr = new Attribute("ID", (List<String>) null);
         Attribute numOfCharsAttr = new Attribute("num-of-chars");
+        Attribute numOfWordsAttr = new Attribute("num-of-words");
+        Attribute avgWordLengthAttr = new Attribute("avg-word-length");
+        Attribute minWordLengthAttr = new Attribute("min-word-length");
+        Attribute medWordLengthAttr = new Attribute("med-word-length");
+        Attribute maxWordLengthAttr = new Attribute("max-word-length");
         Attribute numOfPunctsAttr = new Attribute("num-of-puncts");
-        Attribute avgIsrablogLemmaFreq = new Attribute("avg-isbl-lemma-freq");
-        Attribute avgWordlistWordFreq = new Attribute("avg-wlst-word-freq");
+        Attribute avgIsrablogLemmaFreqAttr = new Attribute("avg-isbl-lemma-freq");
+        Attribute avgWordlistWordFreqAttr = new Attribute("avg-wlst-word-freq");
         Attribute epochCountAttr = new Attribute("epochs");
         Map<Character, Attribute> affixLetterAttrs = new HashMap<>();
         int l = 1;
@@ -54,9 +60,14 @@ public class NewsOutletPredictorFeatureExtractor {
         ArrayList<Attribute> attrs = new ArrayList<>();
         attrs.add(idAttr);
         attrs.add(numOfCharsAttr);
+        attrs.add(numOfWordsAttr);
+        attrs.add(avgWordLengthAttr);
+        attrs.add(minWordLengthAttr);
+        attrs.add(medWordLengthAttr);
+        attrs.add(maxWordLengthAttr);
         attrs.add(numOfPunctsAttr);
-        attrs.add(avgIsrablogLemmaFreq);
-        attrs.add(avgWordlistWordFreq);
+        attrs.add(avgIsrablogLemmaFreqAttr);
+        attrs.add(avgWordlistWordFreqAttr);
         attrs.add(epochCountAttr);
         attrs.addAll(affixLetterAttrs.values());
         attrs.add(outletAttr);
@@ -97,23 +108,37 @@ public class NewsOutletPredictorFeatureExtractor {
             // num of epochs
             inst.setValue(epochCountAttr, Integer.parseInt(columns[2]));
 
-            // TODO num of words, word length, overall affixes, israblog avg. freq
             // TODO words
             String[] rawWords = rawTitle.split("\\s+");
             // TODO lemmata
             String[] rawLem = lemTitle.split("\\s+");
 
-            // word freq
+            // num of words
+            int numOfWords = rawWords.length;
+            inst.setValue(numOfWordsAttr, numOfWords);
+
+            // word freq, length stats
             double totalWordlistWordLogFreq = 0.0;
+            int totalWordChars = 0;
+            List<Integer> wordLengths = new ArrayList<>(numOfWords);
             for (String w : rawWords) {
+                int len = noPunctLength(w);
+                totalWordChars += len;
+                wordLengths.add(len);
                 Integer f = wordlistsFreqTable.get(w);
                 if (f == null || f < 5) {
                     f = 3;
                 }
                 totalWordlistWordLogFreq += Math.log(f);
             }
-            inst.setValue(avgWordlistWordFreq, rawLem.length == 0 ? 0.0 : totalWordlistWordLogFreq / rawWords.length);
-            
+            inst.setValue(avgWordlistWordFreqAttr, rawLem.length == 0 ? 0.0 : totalWordlistWordLogFreq
+                            / numOfWords);
+            inst.setValue(avgWordLengthAttr, ((double) totalWordChars) / numOfWords);
+            Collections.sort(wordLengths);
+            inst.setValue(minWordLengthAttr, wordLengths.get(0));
+            inst.setValue(medWordLengthAttr, wordLengths.get(numOfWords / 2));
+            inst.setValue(maxWordLengthAttr, wordLengths.get(numOfWords-1));
+
             // lemma freq
             double totalIsrablogLemmaLogFreq = 0.0;
             for (String lem : rawLem) {
@@ -123,11 +148,12 @@ public class NewsOutletPredictorFeatureExtractor {
                 }
                 totalIsrablogLemmaLogFreq += Math.log(f);
             }
-            inst.setValue(avgIsrablogLemmaFreq, rawLem.length == 0 ? 0.0 : totalIsrablogLemmaLogFreq / rawLem.length);
-            
+            inst.setValue(avgIsrablogLemmaFreqAttr, rawLem.length == 0 ? 0.0 : totalIsrablogLemmaLogFreq
+                            / rawLem.length);
+
             // affix letters
-            if (rawWords.length == rawLem.length) {
-                for (int i = 0; i < rawWords.length; i++) {
+            if (numOfWords == rawLem.length) {
+                for (int i = 0; i < numOfWords; i++) {
                     String raw = rawWords[i];
                     String lem = rawLem[i];
                     for (char c : raw.toCharArray()) {
@@ -139,7 +165,7 @@ public class NewsOutletPredictorFeatureExtractor {
                     }
                 }
             }
-            
+
             // class: outlet
             inst.setValue(outletAttr, outlet);
 
@@ -162,10 +188,13 @@ public class NewsOutletPredictorFeatureExtractor {
         System.out.println("Finished! Wrote " + written + " vectors with " + badLineInputs + " bad inputs.");
     }
 
+    private static int noPunctLength(String iText) {
+        return iText.length() - countPuncts(iText);
+    }
+
     private static Map<String, Integer> readFreqTable(String iFileLocation) throws FileNotFoundException, IOException {
         Map<String, Integer> freqTable = new HashMap<>();
-        BufferedReader freqFile =
-                        new BufferedReader(new UTF8Reader(new FileInputStream(new File(iFileLocation))));
+        BufferedReader freqFile = new BufferedReader(new UTF8Reader(new FileInputStream(new File(iFileLocation))));
         String freqLine = freqFile.readLine();
         while (freqLine != null) {
             String[] wordFreq = freqLine.split("\\t");
