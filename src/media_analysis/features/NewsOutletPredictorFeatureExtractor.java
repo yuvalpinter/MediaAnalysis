@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,10 +26,12 @@ import weka.core.converters.ArffSaver;
 
 public class NewsOutletPredictorFeatureExtractor {
 
+    // TODO assign ints to new lemmata, make into unigram features
+
     private static final String ISRABLOG_FREQ_FILE_LOCATION = "data/israblog-freqs.txt";
     private static final String WORDLISTS_FREQ_FILE_LOCATION = "data/wordlists-freqs-2012.txt";
     private static final String HEB_LETTERS = "אבגדהוזחטיכךלמםנןסעפףצץקרשת";
-    private static final Pattern punctPattern = Pattern.compile("^[\\p{Punct}]+$");
+    private static final Pattern punctPattern = Pattern.compile("^[\\p{Punct}\\|–]+$");
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
@@ -49,6 +52,12 @@ public class NewsOutletPredictorFeatureExtractor {
         Attribute numOfPunctsAttr = new Attribute("num-of-puncts");
         Attribute avgIsrablogLemmaFreqAttr = new Attribute("avg-isbl-lemma-freq");
         Attribute avgWordlistWordFreqAttr = new Attribute("avg-wlst-word-freq");
+        Attribute maxIsrablogLemmaFreqAttr = new Attribute("max-isbl-lemma-freq");
+        Attribute maxWordlistWordFreqAttr = new Attribute("max-wlst-word-freq");
+        Attribute minIsrablogLemmaFreqAttr = new Attribute("min-isbl-lemma-freq");
+        Attribute minWordlistWordFreqAttr = new Attribute("min-wlst-word-freq");
+        Attribute medIsrablogLemmaFreqAttr = new Attribute("med-isbl-lemma-freq");
+        Attribute medWordlistWordFreqAttr = new Attribute("med-wlst-word-freq");
         Attribute epochCountAttr = new Attribute("epochs");
         Map<Character, Attribute> affixLetterAttrs = new HashMap<>();
         int l = 1;
@@ -68,6 +77,12 @@ public class NewsOutletPredictorFeatureExtractor {
         attrs.add(numOfPunctsAttr);
         attrs.add(avgIsrablogLemmaFreqAttr);
         attrs.add(avgWordlistWordFreqAttr);
+        attrs.add(maxIsrablogLemmaFreqAttr);
+        attrs.add(maxWordlistWordFreqAttr);
+        attrs.add(minIsrablogLemmaFreqAttr);
+        attrs.add(minWordlistWordFreqAttr);
+        attrs.add(medIsrablogLemmaFreqAttr);
+        attrs.add(medWordlistWordFreqAttr);
         attrs.add(epochCountAttr);
         attrs.addAll(affixLetterAttrs.values());
         attrs.add(outletAttr);
@@ -75,7 +90,7 @@ public class NewsOutletPredictorFeatureExtractor {
 
         BufferedReader in = new BufferedReader(new UTF8Reader(new FileInputStream(new File(args[0]))));
         String line = in.readLine();
-        int written = 0, badLineInputs = 0;
+        int written = 0, badLineInputs = 0, wordLemmaAlignmentFails = 0;
         while (line != null) {
             // time-changed \t outlet \t epochs \t raw \t lemmatized
             String[] columns = line.split("\\t");
@@ -108,54 +123,75 @@ public class NewsOutletPredictorFeatureExtractor {
             // num of epochs
             inst.setValue(epochCountAttr, Integer.parseInt(columns[2]));
 
-            // TODO words
             String[] rawWords = rawTitle.split("\\s+");
-            // TODO lemmata
             String[] rawLem = lemTitle.split("\\s+");
 
             // num of words
             int numOfWords = rawWords.length;
+            int numOfLemmata = rawLem.length;
             inst.setValue(numOfWordsAttr, numOfWords);
 
             // word freq, length stats
             double totalWordlistWordLogFreq = 0.0;
+            double[] wordLogFreqs = new double[numOfWords];
             int totalWordChars = 0;
-            List<Integer> wordLengths = new ArrayList<>(numOfWords);
+            int[] wordLengths = new int[numOfWords];
+            int i = 0;
             for (String w : rawWords) {
                 int len = noPunctLength(w);
                 totalWordChars += len;
-                wordLengths.add(len);
+                wordLengths[i] = len;
                 Integer f = wordlistsFreqTable.get(w);
                 if (f == null || f < 5) {
                     f = 3;
                 }
-                totalWordlistWordLogFreq += Math.log(f);
+                double logFreq = Math.log(f);
+                wordLogFreqs[i] = logFreq;
+                totalWordlistWordLogFreq += logFreq;
+                i++;
             }
-            inst.setValue(avgWordlistWordFreqAttr, rawLem.length == 0 ? 0.0 : totalWordlistWordLogFreq
-                            / numOfWords);
+            inst.setValue(avgWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : totalWordlistWordLogFreq / numOfWords);
+            Arrays.sort(wordLogFreqs);
+            inst.setValue(minWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[0]);
+            inst.setValue(medWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[numOfWords / 2]);
+            inst.setValue(maxWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[numOfWords - 1]);
+
             inst.setValue(avgWordLengthAttr, ((double) totalWordChars) / numOfWords);
-            Collections.sort(wordLengths);
-            inst.setValue(minWordLengthAttr, wordLengths.get(0));
-            inst.setValue(medWordLengthAttr, wordLengths.get(numOfWords / 2));
-            inst.setValue(maxWordLengthAttr, wordLengths.get(numOfWords-1));
+            Arrays.sort(wordLengths);
+            inst.setValue(minWordLengthAttr, wordLengths[0]);
+            inst.setValue(medWordLengthAttr, wordLengths[numOfWords / 2]);
+            inst.setValue(maxWordLengthAttr, wordLengths[numOfWords - 1]);
 
             // lemma freq
             double totalIsrablogLemmaLogFreq = 0.0;
+            double[] lemLogFreqs = new double[numOfLemmata];
+            i = 0;
             for (String lem : rawLem) {
                 Integer f = israBlogFreqTable.get(lem);
                 if (f == null || f < 10) {
                     f = 5;
                 }
-                totalIsrablogLemmaLogFreq += Math.log(f);
+                double logFreq = Math.log(f);
+                lemLogFreqs[i] = logFreq;
+                totalIsrablogLemmaLogFreq += logFreq;
+                i++;
             }
-            inst.setValue(avgIsrablogLemmaFreqAttr, rawLem.length == 0 ? 0.0 : totalIsrablogLemmaLogFreq
-                            / rawLem.length);
+            inst.setValue(avgIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : totalIsrablogLemmaLogFreq / numOfLemmata);
+            Arrays.sort(lemLogFreqs);
+            inst.setValue(minIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[0]);
+            inst.setValue(medIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[numOfLemmata / 2]);
+            inst.setValue(maxIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[numOfLemmata - 1]);
 
             // affix letters
-            if (numOfWords == rawLem.length) {
-                for (int i = 0; i < numOfWords; i++) {
-                    String raw = rawWords[i];
-                    String lem = rawLem[i];
+            try {
+                int shift = 0;
+                for (int j = 0; j < numOfWords; j++) {
+                    String raw = rawWords[j];
+                    if (isPunct(raw) || raw.trim().isEmpty()) {
+                        shift++;
+                        continue;
+                    }
+                    String lem = rawLem[j - shift];
                     for (char c : raw.toCharArray()) {
                         String cs = "" + c;
                         if (!lem.contains(cs) && HEB_LETTERS.contains(cs)) {
@@ -164,6 +200,9 @@ public class NewsOutletPredictorFeatureExtractor {
                         }
                     }
                 }
+            } catch (Exception e) {
+                System.out.println("Failed alignment: " + rawTitle + "\t" + lemTitle);
+                wordLemmaAlignmentFails++;
             }
 
             // class: outlet
@@ -185,7 +224,7 @@ public class NewsOutletPredictorFeatureExtractor {
             saver.writeBatch();
         }
 
-        System.out.println("Finished! Wrote " + written + " vectors with " + badLineInputs + " bad inputs.");
+        System.out.println("Finished! Wrote " + written + " vectors with " + badLineInputs + " bad inputs and " + wordLemmaAlignmentFails  + " alignment failures.");
     }
 
     private static int noPunctLength(String iText) {
