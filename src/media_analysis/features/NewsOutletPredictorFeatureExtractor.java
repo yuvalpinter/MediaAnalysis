@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,8 @@ public class NewsOutletPredictorFeatureExtractor {
             System.out.println("Usage: FeatureExtractor <input> <output>");
             return;
         }
+        
+        boolean setIds = false;
 
         Map<String, Integer> israBlogFreqTable = readFreqTable(ISRABLOG_FREQ_FILE_LOCATION);
         Map<String, Integer> wordlistsFreqTable = readFreqTable(WORDLISTS_FREQ_FILE_LOCATION);
@@ -65,9 +66,14 @@ public class NewsOutletPredictorFeatureExtractor {
             affixLetterAttrs.put(a, new Attribute("affix-" + l));
             l++;
         }
+//        Attribute totalAffixLettersAttr = new Attribute("total-affix-letters");
+//        Attribute affixLettersPerWordAttr = new Attribute("affix-letters-per-word");
+//        Attribute affixLettersPerCharAttr = new Attribute("affix-letters-per-char");
         Attribute outletAttr = new Attribute("class", outletList());
         ArrayList<Attribute> attrs = new ArrayList<>();
-        attrs.add(idAttr);
+        if (setIds) {
+            attrs.add(idAttr);    
+        }        
         attrs.add(numOfCharsAttr);
         attrs.add(numOfWordsAttr);
         attrs.add(avgWordLengthAttr);
@@ -85,6 +91,9 @@ public class NewsOutletPredictorFeatureExtractor {
         attrs.add(medWordlistWordFreqAttr);
         attrs.add(epochCountAttr);
         attrs.addAll(affixLetterAttrs.values());
+//        attrs.add(totalAffixLettersAttr);
+//        attrs.add(affixLettersPerWordAttr);
+//        attrs.add(affixLettersPerCharAttr);
         attrs.add(outletAttr);
         Instances instances = new Instances("Instances", attrs, 100);
 
@@ -109,13 +118,16 @@ public class NewsOutletPredictorFeatureExtractor {
             // TODO time-based duplication
 
             Instance inst = new SparseInstance(0);
-            inst.setValue(idAttr, columns[0] + ":" + outlet);
+            if (setIds) {
+                inst.setValue(idAttr, columns[0] + ":" + outlet);                
+            }            
 
             String rawTitle = columns[3];
             String lemTitle = columns[4];
 
             // num of chars
-            inst.setValue(numOfCharsAttr, rawTitle.length());
+            int numOfChars = rawTitle.length();
+            inst.setValue(numOfCharsAttr, numOfChars);
 
             // num of punct
             inst.setValue(numOfPunctsAttr, countPuncts(rawTitle));
@@ -183,6 +195,7 @@ public class NewsOutletPredictorFeatureExtractor {
             inst.setValue(maxIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[numOfLemmata - 1]);
 
             // affix letters
+            int totalAffixLetters = 0;
             try {
                 int shift = 0;
                 for (int j = 0; j < numOfWords; j++) {
@@ -195,6 +208,7 @@ public class NewsOutletPredictorFeatureExtractor {
                     for (char c : raw.toCharArray()) {
                         String cs = "" + c;
                         if (!lem.contains(cs) && HEB_LETTERS.contains(cs)) {
+                            totalAffixLetters++;
                             Attribute val = affixLetterAttrs.get(c);
                             inst.setValue(val, inst.value(val) + 1);
                         }
@@ -204,6 +218,9 @@ public class NewsOutletPredictorFeatureExtractor {
                 System.out.println("Failed alignment: " + rawTitle + "\t" + lemTitle);
                 wordLemmaAlignmentFails++;
             }
+//            inst.setValue(totalAffixLettersAttr, totalAffixLetters);
+//            inst.setValue(affixLettersPerWordAttr, ((double) totalAffixLetters) / numOfWords);
+//            inst.setValue(affixLettersPerCharAttr, ((double) totalAffixLetters) / numOfChars);
 
             // class: outlet
             inst.setValue(outletAttr, outlet);
@@ -216,7 +233,7 @@ public class NewsOutletPredictorFeatureExtractor {
         in.close();
 
         // String output = args[1] + "_ih-ha" + ".arff";
-        String output = args[1] + ".arff";
+        String output = args[1] + (setIds ? "" : "-no-ids") + ".arff";
         if (instances != null) {
             ArffSaver saver = new ArffSaver();
             saver.setInstances(instances);
