@@ -25,7 +25,8 @@ public class ExtractTitlesFromHtml extends Consts {
     private String[] dateDirs;
     
     public ExtractTitlesFromHtml(String iBaseDir) throws ParseException {
-        baseDir = iBaseDir;
+        iBaseDir = iBaseDir.replaceAll("\\\\", "/");
+        baseDir = iBaseDir.endsWith("/") ? iBaseDir : iBaseDir + "/";
         initDateDirs();
     }
 
