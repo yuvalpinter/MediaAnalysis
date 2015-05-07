@@ -1,8 +1,9 @@
 package media_analysis.mining;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -86,8 +87,8 @@ public class ExtractTitlesFromHtml extends Consts {
             aggregateStats[i] = new MiningOutletStats();
         }
 
-        FileWriter out = new FileWriter(new File(outLocation));
-
+        OutputStreamWriter out = new OutputStreamWriter(new PrintStream(new File(outLocation), "UTF8"), "UTF8");
+        
         String lastDate = "";
         int written = 0;
         for (String d : dateDirs) {
