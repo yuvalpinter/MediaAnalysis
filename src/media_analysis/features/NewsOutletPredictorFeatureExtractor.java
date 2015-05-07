@@ -66,9 +66,9 @@ public class NewsOutletPredictorFeatureExtractor {
             affixLetterAttrs.put(a, new Attribute("affix-" + l));
             l++;
         }
-//        Attribute totalAffixLettersAttr = new Attribute("total-affix-letters");
-//        Attribute affixLettersPerWordAttr = new Attribute("affix-letters-per-word");
-//        Attribute affixLettersPerCharAttr = new Attribute("affix-letters-per-char");
+        Attribute totalAffixLettersAttr = new Attribute("total-affix-letters");
+        Attribute affixLettersPerWordAttr = new Attribute("affix-letters-per-word");
+        Attribute affixLettersPerCharAttr = new Attribute("affix-letters-per-char");
         Attribute outletAttr = new Attribute("class", outletList());
         ArrayList<Attribute> attrs = new ArrayList<>();
         if (setIds) {
@@ -91,9 +91,9 @@ public class NewsOutletPredictorFeatureExtractor {
         attrs.add(medWordlistWordFreqAttr);
         attrs.add(epochCountAttr);
         attrs.addAll(affixLetterAttrs.values());
-//        attrs.add(totalAffixLettersAttr);
-//        attrs.add(affixLettersPerWordAttr);
-//        attrs.add(affixLettersPerCharAttr);
+        attrs.add(totalAffixLettersAttr);
+        attrs.add(affixLettersPerWordAttr);
+        attrs.add(affixLettersPerCharAttr);
         attrs.add(outletAttr);
         Instances instances = new Instances("Instances", attrs, 100);
 
@@ -218,9 +218,9 @@ public class NewsOutletPredictorFeatureExtractor {
                 System.out.println("Failed alignment: " + rawTitle + "\t" + lemTitle);
                 wordLemmaAlignmentFails++;
             }
-//            inst.setValue(totalAffixLettersAttr, totalAffixLetters);
-//            inst.setValue(affixLettersPerWordAttr, ((double) totalAffixLetters) / numOfWords);
-//            inst.setValue(affixLettersPerCharAttr, ((double) totalAffixLetters) / numOfChars);
+            inst.setValue(totalAffixLettersAttr, totalAffixLetters);
+            inst.setValue(affixLettersPerWordAttr, ((double) totalAffixLetters) / numOfWords);
+            inst.setValue(affixLettersPerCharAttr, ((double) totalAffixLetters) / numOfChars);
 
             // class: outlet
             inst.setValue(outletAttr, outlet);

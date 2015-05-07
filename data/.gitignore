@@ -1,1 +1,5 @@
 /weka-out_*.arff
+/weka-cann-out-no-ids.arff
+/weka-out-no-ids.arff
+/weka-test.arff
+/weka-train.arff

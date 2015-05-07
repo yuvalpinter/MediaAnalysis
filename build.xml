@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="media_analysis" default="makejar" basedir=".">
+	<!-- Delete the existing build folder -->
+      <target name="clean">
+            <delete dir="${build}" />
+      </target>
+
+      <!-- Create build folder -->
+      <target name="init" depends="clean">
+            <mkdir dir="${build}" />
+      </target>
+	
+	  <copy todir="build">
+	        <fileset dir="bin" />
+	  </copy>
+	
+      <target name="makejar" description="Create a jar for the project">
+            <jar jarfile="media_analysis.jar" basedir="build">
+                  <manifest>
+                        <!-- <attribute name="Main-Class" value="ExtractTitlesFromHtml" /> -->
+                  </manifest>
+            </jar>
+      </target>
+</project>
