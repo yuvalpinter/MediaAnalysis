@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TreeMap;
 
 import media_analysis.Outlet;
@@ -19,7 +20,7 @@ import org.jsoup.nodes.Element;
 
 public class ExtractTitlesFromHtml extends Consts {
 
-    private static final DateFormat df = new SimpleDateFormat(DATE_PATTERN);    
+    private static final DateFormat df = new SimpleDateFormat(DATE_PATTERN, Locale.ENGLISH);    
     
     private String baseDir;
     private String[] dateDirs;
