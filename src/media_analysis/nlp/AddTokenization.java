@@ -18,10 +18,16 @@ import org.apache.lucene.util.Version;
 public class AddTokenization extends Consts {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
+        
+        if (args.length < 2) {
+            System.out.println("Usage: AddTokenization <in-location> <out-location>");
+            return;
+        }
+        
         Analyzer an = new MorphAnalyzer(Version.LUCENE_4_9, "");
 
-        FileWriter out = new FileWriter(new File("data/tok-headlines.txt"));
-        BufferedReader fr = new BufferedReader(new FileReader("data/headlines.txt"));
+        FileWriter out = new FileWriter(new File(args[1]));
+        BufferedReader fr = new BufferedReader(new FileReader(args[0]));
         String l = fr.readLine();
         TokenStream ts = null;
         while (l != null) {

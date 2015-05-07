@@ -18,15 +18,19 @@ import org.jsoup.nodes.Element;
 
 public class ExtractTitlesFromHtml extends Consts {
 
-    private static final String BASE_DIR = "C:/Users/yuvalp/Documents/sites/";
-    private static final String DEMO_DATE = "Wed02-25-2015_12-15PM";
+    private static final DateFormat df = new SimpleDateFormat(DATE_PATTERN);    
+    
+    private String baseDir;
+    private String[] dateDirs;
+    
+    public ExtractTitlesFromHtml(String iBaseDir) throws ParseException {
+        baseDir = iBaseDir;
+        initDateDirs();
+    }
 
-    private static final DateFormat df = new SimpleDateFormat(DATE_PATTERN);
-    private static String[] dateDirs;
-
-    private static void initDateDirs() throws ParseException {
+    private void initDateDirs() throws ParseException {
         TreeMap<Date, String> dateDirList = new TreeMap<>();
-        File[] dirs = new File(BASE_DIR + Outlet.HAARETZ.dirName()).listFiles();
+        File[] dirs = new File(baseDir + Outlet.HAARETZ.dirName()).listFiles();
         for (File d : dirs) {
             String dirName = d.getName();
             dateDirList.put(df.parse(dirName), dirName);
@@ -34,18 +38,14 @@ public class ExtractTitlesFromHtml extends Consts {
         dateDirs = dateDirList.values().toArray(new String[dateDirList.size()]);
     }
 
-    private static String getPage(Outlet o, String date) {
-        return BASE_DIR + o.dirName() + "/" + date + "/" + o.domain() + o.indexFile();
+    private String getPage(Outlet o, String date) {
+        return baseDir + o.dirName() + "/" + date + "/" + o.domain() + o.indexFile();
     }
 
-    private static String getDemoPage(Outlet o) {
-        return getPage(o, DEMO_DATE);
-    }
-
-    private static String getHeadline(Outlet o, String date) throws IOException {
+    private String getHeadline(Outlet o, String date) throws IOException {
         String demoPage = getPage(o, date);
         Document doc = Jsoup.parse(new File(demoPage), o.charset());
-        return findHeadlinesRecursively(doc, o);
+        return findHeadlinesRecursively(doc, o).replaceAll("[0-9]+", "0");
     }
 
     private static String findHeadlinesRecursively(Element doc, Outlet o) {
@@ -63,8 +63,18 @@ public class ExtractTitlesFromHtml extends Consts {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        initDateDirs();
+        if (args.length < 2) {
+            System.out.println("Usage: ExtractTitlesFromHtml <in-dir> <out-location>");
+            return;
+        }
+        
+        ExtractTitlesFromHtml extractor = new ExtractTitlesFromHtml(args[0]);
+        extractor.extract(args[1]);
+        
+    }
 
+    public void extract(String outLocation) throws IOException {
+        
         // initialize counters etc.
         int numOfOutlets = Outlet.values().length;
         MiningOutletStats[] aggregateStats = new MiningOutletStats[numOfOutlets];
@@ -76,7 +86,7 @@ public class ExtractTitlesFromHtml extends Consts {
             aggregateStats[i] = new MiningOutletStats();
         }
 
-        FileWriter out = new FileWriter(new File("out-headlines"));
+        FileWriter out = new FileWriter(new File(outLocation));
 
         String lastDate = "";
         int written = 0;
