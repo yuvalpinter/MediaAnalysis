@@ -113,8 +113,9 @@ public class ExtractTitlesFromHtml extends Consts {
                 }
                 if (h.isEmpty()) {
                     stats.emptyHeadlines++;
+                    continue;
                 }
-                if (!h.isEmpty() && !h.equals(currHead)) {
+                if (!h.equals(currHead)) {
                     out.append(d + "\t" + o + "\t" + headEpoch[i] + "\t" + currHeadlines[i] + "\n");
                     currHeadlines[i] = h;
                     headEpoch[i] = 1;

@@ -30,10 +30,11 @@ public class AddTokenization extends Consts {
         BufferedReader fr = new BufferedReader(new FileReader(args[0]));
         String l = fr.readLine();
         TokenStream ts = null;
+        int i = 1;
         while (l != null) {
             String[] cols = l.split("\\t");
             // time changed \t outlet \t epochs survived \t headline
-            if (cols.length != 4) {
+            if (cols.length != 4 || cols[3].isEmpty()) {
                 continue;
             }
             ts = an.tokenStream("", new StringReader(cols[3]));
@@ -49,6 +50,10 @@ public class AddTokenization extends Consts {
             out.append(l + "\t" + sb.toString().trim() + "\n");
             l = fr.readLine();
             ts.close();
+            if (++i % 1000 == 0) {
+                System.out.println("Printed " + i);
+                out.flush();
+            }
         }
         out.flush();
         out.close();
