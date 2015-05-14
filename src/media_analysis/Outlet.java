@@ -4,10 +4,20 @@ import org.jsoup.nodes.Element;
 
 public enum Outlet {
     
-    YNET, ISRAEL_HAYOM, HAARETZ, MAARIV, NRG, MAKO, WALLA;
+    YNET("yn"), ISRAEL_HAYOM("ih"), HAARETZ("ha"), MAARIV("mv"), NRG("nr"), MAKO("mk"), WALLA("wa");
 
     public String domain() {
         return "www." + dirName().replace("_", "") + ".co.il/";
+    }
+    
+    private Outlet(String iCode) {
+        code = iCode;
+    }
+    
+    private String code;
+    
+    public String code() {
+        return code;
     }
 
     public String dirName() {

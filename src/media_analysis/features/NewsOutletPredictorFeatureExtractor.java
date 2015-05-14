@@ -30,18 +30,57 @@ public class NewsOutletPredictorFeatureExtractor {
     private static final String ISRABLOG_FREQ_FILE_LOCATION = "data/israblog-freqs.txt";
     private static final String WORDLISTS_FREQ_FILE_LOCATION = "data/wordlists-freqs-2012.txt";
     private static final String HEB_LETTERS = "אבגדהוזחטיכךלמםנןסעפףצץקרשת";
+    private static final List<Integer> HEB_MAX_ACC_LETTER_INDICES = Arrays.asList(1, 2, 5, 6, 10, 11, 12, 13, 14, 15,
+                    16, 17, 18, 19, 20, 22, 26, 27);
     private static final Pattern punctPattern = Pattern.compile("^[\\p{Punct}\\|–]+$");
+
+    private Map<String, Integer> israBlogFreqTable;
+    private Map<String, Integer> wordlistsFreqTable;
+
+    public NewsOutletPredictorFeatureExtractor() throws IOException {
+        israBlogFreqTable = readFreqTable(ISRABLOG_FREQ_FILE_LOCATION);
+        wordlistsFreqTable = readFreqTable(WORDLISTS_FREQ_FILE_LOCATION);
+    }
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
             System.out.println("Usage: FeatureExtractor <input> <output>");
             return;
         }
-        
-        boolean setIds = false;
 
-        Map<String, Integer> israBlogFreqTable = readFreqTable(ISRABLOG_FREQ_FILE_LOCATION);
-        Map<String, Integer> wordlistsFreqTable = readFreqTable(WORDLISTS_FREQ_FILE_LOCATION);
+        NewsOutletPredictorFeatureExtractor extractor = new NewsOutletPredictorFeatureExtractor();
+
+        boolean setIds = false;
+        boolean runOnceOnAllOutlets = false;
+        boolean runOnAllPairs = true;
+        boolean runMaxAccFeats = true;
+
+        List<String> allOutlets = outletList();
+        String inArg = args[0];
+        String outBaseArg = args[1];
+        if (runOnceOnAllOutlets) {
+            extractor.extractFeatures(inArg, outBaseArg + (setIds ? "" : "-no-ids"), setIds, runMaxAccFeats, allOutlets);
+        }
+
+        Outlet[] outletVals = Outlet.values();
+        if (runOnAllPairs) {
+            for (int i = 0; i < outletVals.length; i++) {
+                Outlet oi = outletVals[i];
+                for (int j = i + 1; j < outletVals.length; j++) {
+                    List<String> outlets = new ArrayList<>(2);
+                    Outlet oj = outletVals[j];
+                    outlets.add(oi.name());
+                    outlets.add(oj.name());
+                    extractor.extractFeatures(inArg, outBaseArg + "-" + oi.code() + "-" + oj.code(), false,
+                                    runMaxAccFeats, outlets);
+                }
+            }
+        }
+
+    }
+
+    public void extractFeatures(String inFileLocation, String outFileLocation, boolean setIds, boolean runMaxAccFeats,
+                    List<String> outlets) throws FileNotFoundException, IOException {
 
         Attribute idAttr = new Attribute("ID", (List<String>) null);
         Attribute numOfCharsAttr = new Attribute("num-of-chars");
@@ -55,25 +94,27 @@ public class NewsOutletPredictorFeatureExtractor {
         Attribute avgWordlistWordFreqAttr = new Attribute("avg-wlst-word-freq");
         Attribute maxIsrablogLemmaFreqAttr = new Attribute("max-isbl-lemma-freq");
         Attribute maxWordlistWordFreqAttr = new Attribute("max-wlst-word-freq");
-        Attribute minIsrablogLemmaFreqAttr = new Attribute("min-isbl-lemma-freq");
-        Attribute minWordlistWordFreqAttr = new Attribute("min-wlst-word-freq");
+        Attribute minIsrablogLemmaFreqAttr = runMaxAccFeats ? null : new Attribute("min-isbl-lemma-freq");
+        Attribute minWordlistWordFreqAttr = runMaxAccFeats ? null : new Attribute("min-wlst-word-freq");
         Attribute medIsrablogLemmaFreqAttr = new Attribute("med-isbl-lemma-freq");
         Attribute medWordlistWordFreqAttr = new Attribute("med-wlst-word-freq");
-        Attribute epochCountAttr = new Attribute("epochs");
+        Attribute epochCountAttr = runMaxAccFeats ? null : new Attribute("epochs");
         Map<Character, Attribute> affixLetterAttrs = new HashMap<>();
         int l = 1;
         for (char a : HEB_LETTERS.toCharArray()) {
-            affixLetterAttrs.put(a, new Attribute("affix-" + l));
+            if (!runMaxAccFeats || HEB_MAX_ACC_LETTER_INDICES.contains(l)) {
+                affixLetterAttrs.put(a, new Attribute("affix-" + l));
+            }
             l++;
         }
-        Attribute totalAffixLettersAttr = new Attribute("total-affix-letters");
-        Attribute affixLettersPerWordAttr = new Attribute("affix-letters-per-word");
-        Attribute affixLettersPerCharAttr = new Attribute("affix-letters-per-char");
-        Attribute outletAttr = new Attribute("class", outletList());
+        Attribute totalAffixLettersAttr = runMaxAccFeats ? null : new Attribute("total-affix-letters");
+        Attribute affixLettersPerWordAttr = runMaxAccFeats ? null : new Attribute("affix-letters-per-word");
+        Attribute affixLettersPerCharAttr = runMaxAccFeats ? null : new Attribute("affix-letters-per-char");
+        Attribute outletAttr = new Attribute("class", outlets);
         ArrayList<Attribute> attrs = new ArrayList<>();
         if (setIds) {
-            attrs.add(idAttr);    
-        }        
+            attrs.add(idAttr);
+        }
         attrs.add(numOfCharsAttr);
         attrs.add(numOfWordsAttr);
         attrs.add(avgWordLengthAttr);
@@ -85,19 +126,25 @@ public class NewsOutletPredictorFeatureExtractor {
         attrs.add(avgWordlistWordFreqAttr);
         attrs.add(maxIsrablogLemmaFreqAttr);
         attrs.add(maxWordlistWordFreqAttr);
-        attrs.add(minIsrablogLemmaFreqAttr);
-        attrs.add(minWordlistWordFreqAttr);
+        if (!runMaxAccFeats) {
+            attrs.add(minIsrablogLemmaFreqAttr);
+            attrs.add(minWordlistWordFreqAttr);
+        }
         attrs.add(medIsrablogLemmaFreqAttr);
         attrs.add(medWordlistWordFreqAttr);
-        attrs.add(epochCountAttr);
+        if (!runMaxAccFeats) {
+            attrs.add(epochCountAttr);
+        }
         attrs.addAll(affixLetterAttrs.values());
-        attrs.add(totalAffixLettersAttr);
-        attrs.add(affixLettersPerWordAttr);
-        attrs.add(affixLettersPerCharAttr);
+        if (!runMaxAccFeats) {
+            attrs.add(totalAffixLettersAttr);
+            attrs.add(affixLettersPerWordAttr);
+            attrs.add(affixLettersPerCharAttr);
+        }
         attrs.add(outletAttr);
         Instances instances = new Instances("Instances", attrs, 100);
 
-        BufferedReader in = new BufferedReader(new UTF8Reader(new FileInputStream(new File(args[0]))));
+        BufferedReader in = new BufferedReader(new UTF8Reader(new FileInputStream(new File(inFileLocation))));
         String line = in.readLine();
         int written = 0, badLineInputs = 0, wordLemmaAlignmentFails = 0;
         while (line != null) {
@@ -110,17 +157,17 @@ public class NewsOutletPredictorFeatureExtractor {
             }
 
             String outlet = columns[1];
-            // if (!outlet.startsWith("ISR") && !outlet.startsWith("HA")) {
-            // line = in.readLine();
-            // continue;
-            // }
+            if (!outlets.contains(outlet)) {
+                line = in.readLine();
+                continue;
+            }
 
             // TODO time-based duplication
 
             Instance inst = new SparseInstance(0);
             if (setIds) {
-                inst.setValue(idAttr, columns[0] + ":" + outlet);                
-            }            
+                inst.setValue(idAttr, columns[0] + ":" + outlet);
+            }
 
             String rawTitle = columns[3];
             String lemTitle = columns[4];
@@ -133,7 +180,9 @@ public class NewsOutletPredictorFeatureExtractor {
             inst.setValue(numOfPunctsAttr, countPuncts(rawTitle));
 
             // num of epochs
-            inst.setValue(epochCountAttr, Integer.parseInt(columns[2]));
+            if (!runMaxAccFeats) {
+                inst.setValue(epochCountAttr, Integer.parseInt(columns[2]));
+            }
 
             String[] rawWords = rawTitle.split("\\s+");
             String[] rawLem = lemTitle.split("\\s+");
@@ -164,7 +213,9 @@ public class NewsOutletPredictorFeatureExtractor {
             }
             inst.setValue(avgWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : totalWordlistWordLogFreq / numOfWords);
             Arrays.sort(wordLogFreqs);
-            inst.setValue(minWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[0]);
+            if (!runMaxAccFeats) {
+                inst.setValue(minWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[0]);
+            }
             inst.setValue(medWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[numOfWords / 2]);
             inst.setValue(maxWordlistWordFreqAttr, numOfWords == 0 ? 0.0 : wordLogFreqs[numOfWords - 1]);
 
@@ -190,7 +241,9 @@ public class NewsOutletPredictorFeatureExtractor {
             }
             inst.setValue(avgIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : totalIsrablogLemmaLogFreq / numOfLemmata);
             Arrays.sort(lemLogFreqs);
-            inst.setValue(minIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[0]);
+            if (!runMaxAccFeats) {
+                inst.setValue(minIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[0]);
+            }
             inst.setValue(medIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[numOfLemmata / 2]);
             inst.setValue(maxIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : lemLogFreqs[numOfLemmata - 1]);
 
@@ -210,7 +263,9 @@ public class NewsOutletPredictorFeatureExtractor {
                         if (!lem.contains(cs) && HEB_LETTERS.contains(cs)) {
                             totalAffixLetters++;
                             Attribute val = affixLetterAttrs.get(c);
-                            inst.setValue(val, inst.value(val) + 1);
+                            if (val != null) {
+                                inst.setValue(val, inst.value(val) + 1);
+                            }
                         }
                     }
                 }
@@ -218,9 +273,11 @@ public class NewsOutletPredictorFeatureExtractor {
                 System.out.println("Failed alignment: " + rawTitle + "\t" + lemTitle);
                 wordLemmaAlignmentFails++;
             }
-            inst.setValue(totalAffixLettersAttr, totalAffixLetters);
-            inst.setValue(affixLettersPerWordAttr, ((double) totalAffixLetters) / numOfWords);
-            inst.setValue(affixLettersPerCharAttr, ((double) totalAffixLetters) / numOfChars);
+            if (!runMaxAccFeats) {
+                inst.setValue(totalAffixLettersAttr, totalAffixLetters);
+                inst.setValue(affixLettersPerWordAttr, ((double) totalAffixLetters) / numOfWords);
+                inst.setValue(affixLettersPerCharAttr, ((double) totalAffixLetters) / numOfChars);
+            }
 
             // class: outlet
             inst.setValue(outletAttr, outlet);
@@ -233,7 +290,7 @@ public class NewsOutletPredictorFeatureExtractor {
         in.close();
 
         // String output = args[1] + "_ih-ha" + ".arff";
-        String output = args[1] + (setIds ? "" : "-no-ids") + ".arff";
+        String output = outFileLocation + ".arff";
         if (instances != null) {
             ArffSaver saver = new ArffSaver();
             saver.setInstances(instances);
@@ -241,7 +298,8 @@ public class NewsOutletPredictorFeatureExtractor {
             saver.writeBatch();
         }
 
-        System.out.println("Finished! Wrote " + written + " vectors with " + badLineInputs + " bad inputs and " + wordLemmaAlignmentFails  + " alignment failures.");
+        System.out.println("Finished! Wrote " + written + " vectors with " + badLineInputs + " bad inputs and "
+                        + wordLemmaAlignmentFails + " alignment failures.");
     }
 
     private static int noPunctLength(String iText) {
