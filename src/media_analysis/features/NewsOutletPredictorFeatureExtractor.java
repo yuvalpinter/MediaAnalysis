@@ -25,14 +25,24 @@ import weka.core.converters.ArffSaver;
 
 public class NewsOutletPredictorFeatureExtractor {
 
-    // TODO assign ints to new lemmata, make into unigram features
-
     private static final String ISRABLOG_FREQ_FILE_LOCATION = "data/israblog-freqs.txt";
     private static final String WORDLISTS_FREQ_FILE_LOCATION = "data/wordlists-freqs-2012.txt";
     private static final String HEB_LETTERS = "אבגדהוזחטיכךלמםנןסעפףצץקרשת";
     private static final List<Integer> HEB_MAX_ACC_LETTER_INDICES = Arrays.asList(1, 2, 5, 6, 10, 11, 12, 13, 14, 15,
                     16, 17, 18, 19, 20, 22, 26, 27);
     private static final Pattern punctPattern = Pattern.compile("^[\\p{Punct}\\|–]+$");
+
+    private static final String[] topFiftyFebLemmata = {"את", "נתניהו", "נשל", "0", "לא", "על", "ישראל", "בית", "עם",
+                    "ניגד", "שלג", "מבקר", "בחירה", "ממשלה", "איחר", "איראן", "נאם", "ליכוד", "הרצוג", "דאעש",
+                    "ירושלים", "היה", "קונגרס", "משטרה", "מדינה", "דרום", "כול", "ראש", "דיור", "לפיד", "דוח", "פיגוע",
+                    "ניצב", "רה\"מ", "קשה", "טרור", "ציון", "סערה", "יש", "דו\"ח", "אין", "ארה\"ב", "הרוג", "תאונה",
+                    "ליבן", "חשד", "בנט", "ועדה", "מעון", "ירדן"};
+
+    private static final String[] topFiftyJanLemmata = {"0", "את", "על", "נשל", "נתניהו", "ישראל", "לא", "פריז",
+                    "טרור", "פיגוע", "בית", "ליכוד", "צה\"ל", "שלג", "דיווח", "ניגד", "ירושלים", "סוריה", "איחר",
+                    "מחבל", "צפן", "ישן", "חיזבאללה", "משטרה", "עם", "הרוג", "רשימה", "צרפת", "בנה", "נהרג", "היה",
+                    "חי", "סערה", "איראן", "גולן", "עבודה", "רכב", "שידור", "יהודים", "מקום", "פריימריז", "כול", "ראש",
+                    "נפגע", "ערובה", "בחירה", "צבא", "בכיר", "ירה", "הר"};
 
     private Map<String, Integer> israBlogFreqTable;
     private Map<String, Integer> wordlistsFreqTable;
@@ -51,8 +61,8 @@ public class NewsOutletPredictorFeatureExtractor {
         NewsOutletPredictorFeatureExtractor extractor = new NewsOutletPredictorFeatureExtractor();
 
         boolean setIds = false;
-        boolean runOnceOnAllOutlets = false;
-        boolean runOnAllPairs = true;
+        boolean runOnceOnAllOutlets = true;
+        boolean runOnAllPairs = false;
         boolean runMaxAccFeats = true;
 
         List<String> allOutlets = outletList();
@@ -107,6 +117,12 @@ public class NewsOutletPredictorFeatureExtractor {
             }
             l++;
         }
+        Attribute[] freqJanLemmataAttrs = runMaxAccFeats ? null : new Attribute[50];
+        if (freqJanLemmataAttrs != null) {
+            for (int i = 0; i < 50; i++) {
+                freqJanLemmataAttrs[i] = new Attribute("freq-jan-lemma-" + i);
+            }
+        }
         Attribute totalAffixLettersAttr = runMaxAccFeats ? null : new Attribute("total-affix-letters");
         Attribute affixLettersPerWordAttr = runMaxAccFeats ? null : new Attribute("affix-letters-per-word");
         Attribute affixLettersPerCharAttr = runMaxAccFeats ? null : new Attribute("affix-letters-per-char");
@@ -136,6 +152,11 @@ public class NewsOutletPredictorFeatureExtractor {
             attrs.add(epochCountAttr);
         }
         attrs.addAll(affixLetterAttrs.values());
+        if (freqJanLemmataAttrs != null) {
+            for (Attribute fla : freqJanLemmataAttrs) {
+                attrs.add(fla);
+            }
+        }
         if (!runMaxAccFeats) {
             attrs.add(totalAffixLettersAttr);
             attrs.add(affixLettersPerWordAttr);
@@ -225,11 +246,12 @@ public class NewsOutletPredictorFeatureExtractor {
             inst.setValue(medWordLengthAttr, wordLengths[numOfWords / 2]);
             inst.setValue(maxWordLengthAttr, wordLengths[numOfWords - 1]);
 
-            // lemma freq
+            // lemma freq + freq lemmata
             double totalIsrablogLemmaLogFreq = 0.0;
             double[] lemLogFreqs = new double[numOfLemmata];
             i = 0;
             for (String lem : rawLem) {
+                // lemma freq
                 Integer f = israBlogFreqTable.get(lem);
                 if (f == null || f < 10) {
                     f = 5;
@@ -238,6 +260,17 @@ public class NewsOutletPredictorFeatureExtractor {
                 lemLogFreqs[i] = logFreq;
                 totalIsrablogLemmaLogFreq += logFreq;
                 i++;
+
+                // freq lemmata
+                if (freqJanLemmataAttrs == null) {
+                    continue;
+                }
+                for (int fjl = 0; fjl < 50; fjl++) {
+                    if (topFiftyJanLemmata[fjl].equals(lem)) {
+                        Attribute attr = freqJanLemmataAttrs[fjl];
+                        inst.setValue(attr, inst.value(attr) + 1);
+                    }
+                }
             }
             inst.setValue(avgIsrablogLemmaFreqAttr, numOfLemmata == 0 ? 0.0 : totalIsrablogLemmaLogFreq / numOfLemmata);
             Arrays.sort(lemLogFreqs);
