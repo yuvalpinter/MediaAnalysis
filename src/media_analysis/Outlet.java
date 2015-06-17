@@ -15,6 +15,10 @@ public enum Outlet {
     }
     
     private String code;
+
+    public static String toCode(String rep) {
+        return valueOf(rep).code;
+    }
     
     public String code() {
         return code;

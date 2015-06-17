@@ -1,0 +1,21 @@
+features-input:data/tok-cann-all-headlines.txt
+features-output:data/all
+
+features-word-freq-file:data/wordlists-freqs-2012.txt
+features-lemma-freq-file:data/israblog-freqs.txt
+
+# possible values (comma-delimited): ALL,ISRAEL_HAYOM,NRG,MAKO,YNET,HAARETZ,MAARIV,WALLA
+features-outlets:ALL
+
+# meaning, write ALSO files for each pair of outlets
+features-write-paired-files:false
+
+# run with features that had best performance on February set
+optimize-features:true
+
+# "id" field is useful but needs removal by hand in weka gui
+features-have-ids:false
+
+# inclusive. format: yyyy-MM-dd
+features-start-date:2014-07-01
+features-end-date:2015-04-30
