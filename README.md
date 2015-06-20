@@ -17,6 +17,9 @@ Sequentially, we have the following:
 
 =================
 Initial results and release of first dataset and code were announced at the Israeli Seminar on Computational Linguistics (ISCOL) on June 22, 2015 ( http://www.openu.ac.il/ISCOL2015 )
+
 The code was written by Yuval Pinter, blogger at http://dagesh.wordpress.com and Research Engineer at Yahoo Labs: http://labs.yahoo.com/author/yuvalp/
+
 *Yahoo Labs and Yahoo Inc. are not related to this project*
+
 Raw data was supplied by Oren Persico and Shuki Tausig of Ha-ayin Ha-Shvi'it: http://the7eye.org.il .
