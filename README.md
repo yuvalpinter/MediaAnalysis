@@ -29,4 +29,4 @@ Contact: yuvalpinter@gmail.com
 
 *Yahoo Labs and Yahoo Inc. are not related to this project*
 
-Raw data was supplied by Oren Persico and Shuki Tausig of Ha-ayin Ha-Shvi'it: http://the7eye.org.il .
+Raw data was supplied by Oren Persico and Shuki Tausig of Ha-ayin ha-shvi'it: http://the7eye.org.il .
