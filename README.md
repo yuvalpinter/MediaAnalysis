@@ -1,5 +1,6 @@
 # MediaAnalysis
 Extraction and analysis of data from Israeli news sites
+
 Yuval Pinter, 2015 (GPL v3 license)
 
 This project contains code and data used for the analysis of headlines in the following Israeli news sites:
