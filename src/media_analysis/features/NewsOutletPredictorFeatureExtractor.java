@@ -33,6 +33,12 @@ import weka.core.Instances;
 import weka.core.SparseInstance;
 import weka.core.converters.ArffSaver;
 
+/**
+ * TODO properly document and remove mess.
+ * In the meantime, the configuration file under conf/conf.txt should work as a single argument here.
+ * @author yuvalp
+ *
+ */
 public class NewsOutletPredictorFeatureExtractor extends Consts {
 
     private static final String HEB_LETTERS = "אבגדהוזחטיכךלמםנןסעפףצץקרשת";

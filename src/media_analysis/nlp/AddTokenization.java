@@ -15,6 +15,11 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.util.Version;
 
+/**
+ * Adds hspell's tokenization as new column in output from {@link media_analysis.mining.ExtractTitlesFromHtml}
+ * @author yuvalp
+ *
+ */
 public class AddTokenization extends Consts {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {

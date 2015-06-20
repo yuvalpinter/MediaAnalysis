@@ -18,6 +18,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+/**
+ * Extracts headlines from html files, in chronological order and with duplicate unification.
+ * Output format: last date headline appeared \tab outlet name \tab number of consecutive appearances \tab headline text
+ * @author yuvalp
+ *
+ */
 public class ExtractTitlesFromHtml extends Consts {
 
     private static final DateFormat df = new SimpleDateFormat(DATE_PATTERN, Locale.ENGLISH);    
