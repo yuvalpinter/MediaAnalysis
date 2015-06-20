@@ -1,0 +1,3 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+14:15:08	52/52	---M--	200	added ('OK')	text/plain	etag:%2282e3b2a11cccf1:0%22	http://www.maariv.co.il/robots.txt		(from )
+14:15:09	276898/276898	---MCZ	200	added ('OK')	text/html	date:Thu,%2026%20Feb%202015%2012:15:09%20GMT	http://www.maariv.co.il/	d:/sites/maariv/Thu02-26-2015_02-15PM/www.maariv.co.il/index.html	(from )

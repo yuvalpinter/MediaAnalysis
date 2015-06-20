@@ -1,0 +1,3 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+14:15:04	3429/3429	---M-Z	200	added ('OK')	text/plain	date:Fri,%2008%20Aug%202014%2009:07:00%20GMT	http://www.nrg.co.il/robots.txt		(from )
+14:15:04	85405/85405	---M-Z	200	added ('OK')	text/html	date:Thu,%2026%20Feb%202015%2012:15:05%20GMT	http://www.nrg.co.il/	d:/sites/nrg/Thu02-26-2015_02-15PM/www.nrg.co.il/index.html	(from )

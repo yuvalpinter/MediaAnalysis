@@ -1,0 +1,3 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+14:15:16	661/661	---M-Z	200	added ('OK')	text/plain	date:Thu,%2017%20Jul%202014%2007:52:12%20GMT	http://www.israelhayom.co.il/robots.txt		(from )
+14:15:16	193330/193330	---M-Z	200	added ('OK')	text/html	etag:%221424952842-0%22	http://www.israelhayom.co.il/	d:/sites/israel_hayom/Thu02-26-2015_02-15PM/www.israelhayom.co.il/index.html	(from )

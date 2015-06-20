@@ -1,0 +1,8 @@
+http://www.maariv.co.il/ -O "d:\\sites\\maariv\\Thu02-26-2015_02-15PM" -r1 -v
+File generated automatically on Thu, 26 Feb 2015 14:15:08, do NOT edit
+
+To update a mirror, just launch httrack without any parameters
+The existing cache will be used (and modified)
+To have other options, retype all parameters and launch HTTrack
+To continue an interrupted mirror, just launch httrack without any parameters
+

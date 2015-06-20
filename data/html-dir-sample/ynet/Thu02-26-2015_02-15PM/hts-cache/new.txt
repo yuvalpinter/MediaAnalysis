@@ -1,0 +1,3 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+14:15:03	484426/484426	---M-Z	200	added ('OK')	text/html	date:Thu,%2026%20Feb%202015%2012:09:52%20GMT	http://www.ynet.co.il/home/0,7340,L-8,00.html	d:/sites/ynet/Thu02-26-2015_02-15PM/www.ynet.co.il/home/0,7340,L-8,00.html	(from )
+14:15:03	1550/1550	---M--	200	added ('OK')	text/plain	etag:%2256e59047c630d01:0%22	http://www.ynet.co.il/robots.txt		(from )
