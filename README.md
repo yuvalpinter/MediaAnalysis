@@ -16,10 +16,16 @@ Sequentially, we have the following:
 - Feature extraction in Weka format from DATA, using auxiliary tables, under media_analysis.features.NewsOutletPredictorFeatureExtractor (full documentation to follow). Demo configuration file in conf/conf.txt
 - Weka format feature files under data. Best-performing feature set with Weka's RandomForest on default parameters under data/weka-cann-out-4538.arff, and performance summaries under data/4538-summary.txt
 
+Notes:
+- Consult .classpath for external resources to be downloaded and included (jsoup, lucene + hebmorph, weka)
+- build.xml can be run to produce a JAR file which, when put in a directory alongside jsoup, can be used to extract titles from an HTML file dir structure via script.
+
 =================
 Initial results and release of first dataset and code were announced at the Israeli Seminar on Computational Linguistics (ISCOL) on June 22, 2015 ( http://www.openu.ac.il/ISCOL2015 )
 
 The code was written by Yuval Pinter, blogger at http://dagesh.wordpress.com and Research Engineer at Yahoo Labs: http://labs.yahoo.com/author/yuvalp/
+
+Contact: yuvalpinter@gmail.com
 
 *Yahoo Labs and Yahoo Inc. are not related to this project*
 
